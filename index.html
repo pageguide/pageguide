@@ -306,8 +306,8 @@ section{position:relative;z-index:1}
 @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}
   .pill,h1.head .l1,h1.head .l2,.sub,.hero-actions,.stage,.works{animation:none!important;opacity:1!important;transform:none!important}}
 
-.features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.feat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px 22px;transition:transform .25s,box-shadow .25s,border-color .25s}
+.features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.feat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px 22px;min-width:0;transition:transform .25s,box-shadow .25s,border-color .25s}
 .feat:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 40%,var(--line));box-shadow:0 16px 36px -24px rgba(10,15,22,.4)}
 .feat .ico{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--glow),transparent);border:1px solid var(--line);
   display:grid;place-items:center;color:var(--accent-ink);margin-bottom:16px}
@@ -345,14 +345,14 @@ section{position:relative;z-index:1}
 .install-band .sec-head h2{color:#fff}
 .install-band .sec-head p{color:rgba(255,255,255,.7)}
 .install-band .eyebrow{color:var(--accent)}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
-.step{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:22px}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:8px}
+.step{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:22px;min-width:0}
 .step .num{font-family:var(--font-mono);font-size:12px;color:var(--accent);font-weight:700}
 .step h4{font-family:var(--font-display);font-weight:600;font-size:17px;margin:10px 0 10px;color:#fff}
 .step p{color:rgba(255,255,255,.66);font-size:14px;margin:0 0 14px;line-height:1.5}
 .codebox{background:#0b0906;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px;font-family:var(--font-mono);
-  font-size:12.5px;color:#e8e2d6;display:flex;align-items:center;gap:10px;overflow-x:auto}
-.codebox code{white-space:nowrap}.codebox .s{color:var(--accent)}
+  font-size:12.5px;color:#e8e2d6;display:flex;align-items:center;gap:10px;overflow-x:auto;min-width:0}
+.codebox code{white-space:nowrap;min-width:0}.codebox .s{color:var(--accent)}
 .codebox .mini-copy{margin-left:auto;flex:none;width:28px;height:28px;border-radius:7px;border:1px solid rgba(255,255,255,.15);
   background:rgba(255,255,255,.05);color:#fff;cursor:pointer;display:grid;place-items:center;transition:.18s}
 .codebox .mini-copy:hover{border-color:var(--accent);color:var(--accent)}
@@ -373,9 +373,9 @@ footer{border-top:1px solid var(--line);padding-block:40px;position:relative;z-i
 .foot-links a:hover{color:var(--accent-ink)}
 
 /* hero pillars (README: See the proof / Get guided / Stay private) */
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:860px;margin:34px auto 0;
+.pillars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:860px;margin:34px auto 0;
   opacity:0;transform:translateY(12px);animation:rise .8s .56s forwards cubic-bezier(.2,.7,.2,1)}
-.pillar{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px;text-align:left;transition:.2s}
+.pillar{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px;text-align:left;min-width:0;transition:.2s}
 .pillar:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
 .pillar .pt{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:600;font-size:15.5px;letter-spacing:-.01em}
 .pillar .pt .pi{width:30px;height:30px;border-radius:9px;background:var(--glow);color:var(--accent-ink);display:grid;place-items:center;flex:none}
