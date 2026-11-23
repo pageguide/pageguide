@@ -218,16 +218,19 @@ h1.head .l2{animation-delay:.24s}
 .web .wtool .k b{color:var(--accent);font-weight:700}
 .web .wurl{padding:8px 12px 2px;font-size:11px;color:#6fb4f2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .web .wstat{padding:0 12px 9px;font-size:10px;color:var(--term-dim)}
-.web .wshot{position:relative;margin:0 10px 10px;background:#fff;color:#202122;border-radius:4px;padding:14px 16px 16px;
-  font-family:var(--font-body);font-size:11.5px;line-height:1.75;overflow:hidden}
-.web .wshot h4{font-family:Georgia,serif;font-size:17px;font-weight:400;margin:0 0 7px;border-bottom:1px solid #eaecef;padding-bottom:5px}
-.web .wshot a{color:#3366cc}
-.web .boxed{position:relative;background:rgba(247,130,30,.13);outline:1.5px solid var(--accent);border-radius:2px;padding:0 2px;font-weight:600;color:#202122;white-space:nowrap}
-.web .wlabel{position:absolute;display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#231500;
+.web .wshot{position:relative;margin:0 10px 10px;border-radius:5px;overflow:hidden;line-height:0;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.web .wimg{display:block;width:100%;height:auto}
+/* annotation box drawn over the real screenshot, positioned by % of the image */
+.web .wbox{position:absolute;left:44.9%;top:37.9%;width:8.5%;height:3.5%;outline:2px solid var(--accent);
+  background:rgba(247,130,30,.16);border-radius:3px;box-shadow:0 0 0 3px rgba(247,130,30,.16),0 6px 16px rgba(247,130,30,.35);
+  opacity:0;transform:scale(1.06);transition:opacity .45s,transform .45s;z-index:2}
+.web .wbox.show{opacity:1;transform:scale(1)}
+.web .wlabel{position:absolute;left:54.2%;top:37.4%;display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#231500;
   font-family:var(--font-mono);font-size:11px;font-weight:700;padding:3px 10px;border-radius:7px;white-space:nowrap;opacity:0;
-  box-shadow:0 8px 18px rgba(247,130,30,.45);transition:opacity .4s;z-index:3}
+  box-shadow:0 8px 18px rgba(247,130,30,.45);transition:opacity .45s .12s;z-index:3;line-height:1.3}
 .web .wlabel.show{opacity:1}
-.web .wlabel::before{content:"";position:absolute;left:-6px;top:50%;transform:translateY(-50%) rotate(45deg);width:10px;height:10px;background:var(--accent);border-radius:1px}
+.web .wlabel::before{content:"";position:absolute;left:-5px;top:50%;transform:translateY(-50%) rotate(45deg);width:9px;height:9px;background:var(--accent);border-radius:1px}
+@media (max-width:560px){.web .wlabel{font-size:9.5px;padding:2px 7px}}
 .web .whelp{padding:0 12px 11px;font-size:10px;color:var(--term-dim);line-height:1.6}
 
 /* SYSTEM MAP (explain code) */
@@ -284,6 +287,7 @@ h1.head .l2{animation-delay:.24s}
 .diff-row .ln:hover{text-decoration:underline}
 .diff-row .pl{color:var(--term-green)}.diff-row .mi{color:#F2714E}
 .diff-foot{font-size:10.5px;color:var(--term-dim);margin-top:12px;display:flex;align-items:center;gap:8px}
+.diff-foot .dstop{color:var(--term-green);font-size:9px;line-height:1}
 
 /* chips to drive terminal */
 .chips{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin:22px auto 0;max-width:760px}
@@ -418,6 +422,16 @@ footer{border-top:1px solid var(--line);padding-block:40px;position:relative;z-i
 .cite-table code{font-family:var(--font-mono);font-size:12px;color:#e8e2d6;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:6px;white-space:nowrap}
 .cite-table .how{color:rgba(255,255,255,.66)}
 @media (max-width:620px){.cite-table .ctr{grid-template-columns:1fr;gap:5px}.cite-table .ctr.h{display:none}}
+
+/* copy-success toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);z-index:90;
+  display:inline-flex;align-items:center;gap:9px;padding:11px 16px;border-radius:12px;
+  background:var(--ink);color:var(--bg);font-family:var(--font-body);font-weight:600;font-size:14px;
+  box-shadow:0 14px 40px -12px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06);
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:calc(100vw - 32px)}
+.toast .ck2{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--good);color:#fff;flex:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:opacity .2s}}
 
 @keyframes rise{to{opacity:1;transform:none}}
 @keyframes fade{to{opacity:1}}
@@ -729,6 +743,7 @@ document.querySelectorAll('[data-copy]').forEach(function(b){
     var txt=b.getAttribute('data-copy');
     var done=function(){var l=b.querySelector('.lbl');b.classList.add('copied');
       var old=l?l.textContent:null;if(l)l.textContent='Copied!';
+      showToast('Copied to clipboard');
       setTimeout(function(){b.classList.remove('copied');if(l)l.textContent=old;},1500);};
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,function(){fallback(txt,done);});}
     else fallback(txt,done);
@@ -736,6 +751,13 @@ document.querySelectorAll('[data-copy]').forEach(function(b){
 });
 function fallback(txt,done){try{var t=document.createElement('textarea');t.value=txt;t.style.position='fixed';t.style.opacity='0';
   document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);done();}catch(e){}}
+var _toast,_tt;
+function showToast(msg){try{
+  if(!_toast){_toast=document.createElement('div');_toast.className='toast';_toast.setAttribute('role','status');_toast.setAttribute('aria-live','polite');document.body.appendChild(_toast);}
+  _toast.innerHTML='<span class="ck2"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span>'+(msg||'Copied to clipboard')+'</span>';
+  void _toast.offsetWidth;_toast.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(function(){_toast.classList.remove('show');},1700);
+}catch(e){}}
 
 /* ===== Scroll reveal ===== */
 (function(){
@@ -781,20 +803,17 @@ function fallback(txt,done){try{var t=document.createElement('textarea');t.value
         +'<div class="wtool"><span class="k"><b>V</b> Image</span><span class="k">Fit</span><span class="k"><b>+</b> Zoom</span><span class="k"><b>−</b> Zoom</span><span class="k"><b>O</b> Original</span><span class="k"><b>D</b> Details</span><span class="k"><b>N</b> Next</span><span class="k"><b>Q</b> Close</span></div>'
         +'<div class="wurl">https://en.wikipedia.org/wiki/Amazon_River</div>'
         +'<div class="wstat">Annotated · Zoom 1.0x · Saved 2026-11-08T21:24:38 UTC</div>'
-        +'<div class="wshot"><h4>Amazon River</h4>'
-        +'<p>From Wikipedia, the free encyclopedia</p>'
-        +'<p>For nearly a century, the headwaters of the <a>Apurímac River</a> were thought to be the source. A study found the most distant source to be the <span class="boxed" id="tgt">Nevado Mismi</span> drainage in the Peruvian Andes, which in turn feeds the <a>Río Apurímac</a>.</p>'
+        +'<div class="wshot">'
+        +'<img class="wimg" src="amazon-river-wikipedia.png" alt="Screenshot of the Amazon River Wikipedia article with the phrase Nevado Mismi boxed" loading="lazy" decoding="async">'
+        +'<span class="wbox" id="tgt" aria-hidden="true"></span>'
         +'<span class="wlabel" id="wlabel"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L15 9 L22 9 L16 14 L18 21 L12 17 L6 21 L8 14 L2 9 L9 9 Z"/></svg>Nevado Mismi</span>'
         +'</div>'
-        +'<div class="whelp">Screenshot stays visible. <b>V</b> resets it · <b>D</b> toggles details · <b>+/−</b> zoom · <b>N</b> next match · <b>Q</b> close.</div>'
+        +'<div class="whelp">Real screenshot, boxed in place. <b>V</b> resets it · <b>D</b> toggles details · <b>+/−</b> zoom · <b>N</b> next match · <b>Q</b> close.</div>'
         +'</div></div>';},
-      after:function(){var tgt=document.getElementById('tgt'),lbl=document.getElementById('wlabel');
-        function place(){if(!tgt||!lbl)return;var shot=lbl.parentNode;var r=tgt.getBoundingClientRect(),p=shot.getBoundingClientRect();
-          var left=r.right-p.left+16, top=r.top-p.top-3;
-          if(left+140>p.width){left=r.left-p.left; top=r.top-p.top-30;}
-          lbl.style.left=left+'px';lbl.style.top=top+'px';}
-        place();if(reduce){lbl.classList.add('show');}else{setTimeout(function(){place();lbl.classList.add('show');},320);}
-        window.addEventListener('resize',place,{passive:true});}
+      after:function(){var box=document.getElementById('tgt'),lbl=document.getElementById('wlabel');
+        if(!box||!lbl)return;
+        if(reduce){box.classList.add('show');lbl.classList.add('show');}
+        else{setTimeout(function(){box.classList.add('show');lbl.classList.add('show');},360);}}
     },
     code:{
       cmd:'/pg explain the code in this repo',
@@ -884,7 +903,7 @@ function fallback(txt,done){try{var t=document.createElement('textarea');t.value
         +'<div class="diff"><div class="diff-h">◆ CHANGES</div>'
         +'<div class="diff-row"><span class="d">●&nbsp; <span class="f">src/auth.py</span>: Refresh tokens now rotate after use.</span> <span class="ln" data-l="src/auth.py L18–L31">(L18–L31)</span> <span class="pl">+8</span> <span class="mi">−2</span></div>'
         +'<div class="diff-row"><span class="d">●&nbsp; <span class="f">tests/test_auth.py</span>: Covers replaying a consumed token.</span> <span class="ln" data-l="tests/test_auth.py L40–L67">(L40–L67)</span> <span class="pl">+24</span> <span class="mi">−0</span></div>'
-        +'<div class="diff-foot"><span class="spark"></span>watching for changes… · Ctrl-C to stop</div>'
+        +'<div class="diff-foot"><span class="dstop">■</span>stopped · 2 files summarized · press ↵ to run again</div>'
         +'<div class="smap-note" id="diffnote" style="margin:10px 2px 0">Ctrl-click a (L–L) link to open those exact lines.</div>'
         +'</div></div>';},
       after:function(){var note=document.getElementById('diffnote');
