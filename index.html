@@ -284,6 +284,7 @@ h1.head .l2{animation-delay:.24s}
 .diff-row .ln:hover{text-decoration:underline}
 .diff-row .pl{color:var(--term-green)}.diff-row .mi{color:#F2714E}
 .diff-foot{font-size:10.5px;color:var(--term-dim);margin-top:12px;display:flex;align-items:center;gap:8px}
+.diff-foot .dstop{color:var(--term-green);font-size:9px;line-height:1}
 
 /* chips to drive terminal */
 .chips{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin:22px auto 0;max-width:760px}
@@ -884,7 +885,7 @@ function fallback(txt,done){try{var t=document.createElement('textarea');t.value
         +'<div class="diff"><div class="diff-h">◆ CHANGES</div>'
         +'<div class="diff-row"><span class="d">●&nbsp; <span class="f">src/auth.py</span>: Refresh tokens now rotate after use.</span> <span class="ln" data-l="src/auth.py L18–L31">(L18–L31)</span> <span class="pl">+8</span> <span class="mi">−2</span></div>'
         +'<div class="diff-row"><span class="d">●&nbsp; <span class="f">tests/test_auth.py</span>: Covers replaying a consumed token.</span> <span class="ln" data-l="tests/test_auth.py L40–L67">(L40–L67)</span> <span class="pl">+24</span> <span class="mi">−0</span></div>'
-        +'<div class="diff-foot"><span class="spark"></span>watching for changes… · Ctrl-C to stop</div>'
+        +'<div class="diff-foot"><span class="dstop">■</span>stopped · 2 files summarized · press ↵ to run again</div>'
         +'<div class="smap-note" id="diffnote" style="margin:10px 2px 0">Ctrl-click a (L–L) link to open those exact lines.</div>'
         +'</div></div>';},
       after:function(){var note=document.getElementById('diffnote');
