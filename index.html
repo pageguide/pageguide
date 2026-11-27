@@ -179,6 +179,21 @@ h1.head .l2{animation-delay:.24s}
 .spark{width:14px;height:14px;border:2px solid var(--term-line);border-top-color:var(--term-green);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* live prompt: a real input so visitors can type commands */
+.tprompt{display:flex;align-items:center;gap:9px;padding:12px 22px 14px;background:var(--term-bg2);border-top:1px solid var(--term-line);cursor:text}
+.tprompt .ps{color:var(--accent);font-weight:700;flex:none;font-size:13.5px}
+.tprompt input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--term-fg);font:inherit;font-size:13.5px;
+  caret-color:var(--term-green);padding:2px 0}
+.tprompt input::placeholder{color:var(--term-dim);opacity:.8}
+.tprompt:focus-within{box-shadow:inset 0 1px 0 rgba(246,121,60,.45)}
+@media (max-width:560px){.tprompt input{font-size:16px}}
+.term-body,.sh-line{text-align:left}
+.sh-line{margin-top:14px;font-size:13px;color:var(--term-fg);white-space:pre-wrap;word-break:break-word}
+.sh-line .dim{color:var(--term-dim)}.sh-line .ok{color:var(--term-green)}.sh-line .err{color:#F2714E}
+.sh-line .hl2{color:var(--accent)}
+.sh-echo{margin-top:14px;font-size:13.5px}
+.sh-echo .sig{margin-right:9px}
+
 /* evidence card inside terminal */
 .ev{background:var(--term-bg2);border:1px solid var(--term-line);border-radius:12px;overflow:hidden}
 .ev-head{display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid var(--term-line);font-size:11.5px;color:var(--term-dim);font-family:var(--font-mono)}
@@ -535,6 +550,10 @@ footer{border-top:1px solid var(--line);padding-block:40px;position:relative;z-i
           </div>
         </div>
         <div class="term-body" id="termBody"></div>
+        <form class="tprompt" id="tprompt" autocomplete="off">
+          <span class="ps" aria-hidden="true">$</span>
+          <input id="tinput" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" aria-label="Type a command" placeholder="type a command · try help, /pg find Nevado Mismi, pg dashboard">
+        </form>
       </div>
       <div class="chips" id="chips">
         <button class="chip" data-demo="pdf"><span class="s">/pg</span> cite what web agents lack</button>
@@ -914,15 +933,15 @@ function showToast(msg){try{
 
   function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  function run(key){
+  function run(key,typedCmd){
     var d=DEMOS[key];if(!d)return;
     var mine=++runId;
-    body.innerHTML='<div class="prompt-line"><span class="sig">$ /pg</span><span class="typed" id="typed"></span><span class="cursor" id="cur"></span></div><div class="out" id="out"></div>';
+    var cmdStr=typedCmd||d.cmd;               // what the visitor actually typed, or the canned command
+    var isSlash=/^\/pg(\s|$)/.test(cmdStr);
+    body.innerHTML='<div class="prompt-line"><span class="sig">$ '+(isSlash?'/pg':'pg')+'</span><span class="typed" id="typed"></span><span class="cursor" id="cur"></span></div><div class="out" id="out"></div>';
     var typed=document.getElementById('typed'),cur=document.getElementById('cur'),out=document.getElementById('out');
-    var full=d.cmd.replace(/^\/pg\s*/,'').replace(/^pg\s*/,'');
-    // adjust sig for plain "pg" commands
-    if(d.cmd.indexOf('/pg')!==0){document.querySelector('.sig').textContent='$ pg';}
-    else{document.querySelector('.sig').textContent='$ /pg';}
+    var full=cmdStr.replace(/^\/pg\s*/,'').replace(/^pg\s*/,'');
+    var instant=reduce||!!typedCmd;           // typed by the visitor → no replay animation
 
     function reveal(){
       if(mine!==runId)return;
@@ -936,7 +955,7 @@ function showToast(msg){try{
       },reduce?120:780);
     }
 
-    if(reduce){typed.textContent=full;reveal();return;}
+    if(instant){typed.textContent=full;reveal();return;}
     var i=0;
     (function type(){
       if(mine!==runId)return;
@@ -958,11 +977,95 @@ function showToast(msg){try{
     cap.classList.add('swap');
     setTimeout(function(){capT.textContent=c[0];capS.textContent=c[1];cap.classList.remove('swap');},240);}
 
-  function select(key){
+  function select(key,typedCmd){
     tabs.forEach(function(t){t.setAttribute('aria-selected',t.getAttribute('data-demo')===key?'true':'false');});
     setCap(key);
-    run(key);
+    run(key,typedCmd);
   }
+
+  /* ===== Live prompt: a tiny pretend shell ===== */
+  var form=document.getElementById('tprompt'),input=document.getElementById('tinput');
+  var hist=[],hpos=0,draft='';
+  var REPO='npx skills add tinxai/pageguide_terminal -g';
+  var COMMANDS=['/pg cite','/pg find','/pg explain','pg dashboard','pg diff --watch','help','ls','clear','whoami','pwd','date','echo','install','github'];
+
+  function line(html){var d=document.createElement('div');d.className='sh-line';d.innerHTML=html;body.appendChild(d);return d;}
+  function echo(cmd){var d=document.createElement('div');d.className='sh-echo';
+    d.innerHTML='<span class="sig">$</span><span class="typed">'+esc(cmd)+'</span>';body.appendChild(d);}
+  function hintLine(){return '<span class="dim">try: </span><span class="hl2">/pg cite</span><span class="dim"> · </span><span class="hl2">/pg find Nevado Mismi</span><span class="dim"> · </span><span class="hl2">/pg explain</span><span class="dim"> · </span><span class="hl2">pg dashboard</span><span class="dim"> · </span><span class="hl2">pg diff --watch</span>';}
+
+  // map free text after "/pg" or "pg" to a demo
+  function route(rest){
+    var r=rest.toLowerCase();
+    if(/^(dash|dashboard|agents|track)/.test(r))return 'dash';
+    if(/^(diff|watch|changes|git)/.test(r))return 'diff';
+    if(/(explain|code|repo|architecture|diagram|map|how.*fit)/.test(r))return 'code';
+    if(/(find|web|wikipedia|site|page|browser|nevado|mismi|amazon|url|http)/.test(r))return 'web';
+    if(/(cite|pdf|passage|quote|paper|arxiv|agents lack|lack)/.test(r))return 'pdf';
+    return null;
+  }
+
+  function exec(raw){
+    var cmd=raw.trim();if(!cmd)return;
+    if(hist[hist.length-1]!==cmd)hist.push(cmd);hpos=hist.length;draft='';
+    var m=cmd.match(/^(\/pg|pg)(?:\s+(.*))?$/i);
+    if(m){
+      var rest=(m[2]||'').trim();
+      if(!rest){runId++;body.innerHTML='';echo(cmd);
+        line('<span class="ok">PageGuide</span> — evidence you can see, not just trust.\n<span class="dim">usage:</span> '+m[1]+' &lt;what you want&gt;\n'+hintLine());return;}
+      var k=route(rest);
+      if(k){select(k,cmd);return;}
+      runId++;body.innerHTML='';echo(cmd);
+      line('<span class="err">pg:</span> this demo only knows a few requests.\n'+hintLine());return;
+    }
+    var parts=cmd.split(/\s+/),head=parts[0].toLowerCase();
+    if(/^npx$/.test(head)&&/skills\s+add\s+tinxai\/pageguide_terminal/.test(cmd)){
+      echo(cmd);
+      var d=line('<span class="dim">resolving tinxai/pageguide_terminal…</span>');
+      setTimeout(function(){d.innerHTML='<span class="dim">resolving tinxai/pageguide_terminal…</span>\n<span class="ok">✓</span> installed skill <b>pageguide</b> <span class="dim">(global)</span>\n<span class="dim">Open Claude Code and type</span> <span class="hl2">/pg</span> <span class="dim">to start. (Demo only — run it in your own terminal for the real thing.)</span>';},reduce?0:650);
+      return;
+    }
+    switch(head){
+      case 'clear':case 'cls':runId++;body.innerHTML='';return;
+      case 'help':case '?':case 'man':echo(cmd);
+        line('<span class="ok">PageGuide demo shell</span> <span class="dim">· everything runs in your browser</span>\n'
+          +'  <span class="hl2">/pg cite</span> …            cite a passage in a PDF\n'
+          +'  <span class="hl2">/pg find</span> &lt;text&gt;      find something on a website\n'
+          +'  <span class="hl2">/pg explain</span>           map a codebase\n'
+          +'  <span class="hl2">pg dashboard</span>          track many agents\n'
+          +'  <span class="hl2">pg diff --watch</span>       live, cited git changes\n'
+          +'  <span class="hl2">install</span>               how to install it\n'
+          +'  <span class="dim">ls · pwd · whoami · date · echo · clear · ↑/↓ history · Tab complete</span>');return;
+      case 'ls':echo(cmd);line('SKILL.md  pageguide.pdf  amazon-river-wikipedia.png  <span class="hl2">scripts/</span>  <span class="hl2">src/</span>  <span class="hl2">tests/</span>');return;
+      case 'pwd':echo(cmd);line('/home/you/pageguide_terminal');return;
+      case 'whoami':echo(cmd);line('you  <span class="dim">(and an agent that shows its work)</span>');return;
+      case 'date':echo(cmd);line(esc(new Date().toString()));return;
+      case 'echo':echo(cmd);line(esc(parts.slice(1).join(' ')));return;
+      case 'install':echo(cmd);line('<span class="dim">Run this once in your terminal:</span>\n<span class="hl2">'+REPO+'</span>\n<span class="dim">…or try it right here — paste it into this prompt.</span>');return;
+      case 'github':echo(cmd);line('<span class="hl2">https://github.com/tinxai/pageguide_terminal</span>');return;
+      case 'sudo':echo(cmd);line('<span class="err">nice try.</span> This is a demo; there is nothing to break.');return;
+      case 'exit':case 'quit':echo(cmd);line('<span class="dim">The tab stays open — close it whenever you like.</span>');return;
+    }
+    echo(cmd);
+    line('<span class="err">zsh: command not found:</span> '+esc(parts[0])+'\n<span class="dim">type</span> <span class="hl2">help</span> <span class="dim">to see what works here.</span>');
+  }
+
+  form.addEventListener('submit',function(e){e.preventDefault();var v=input.value;input.value='';exec(v);
+    // keep the newest output in view inside the page, without jumping the whole page around
+    var r=form.getBoundingClientRect();if(r.bottom>window.innerHeight||r.top<0){form.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});}});
+  input.addEventListener('keydown',function(e){
+    if(e.key==='ArrowUp'){if(!hist.length)return;e.preventDefault();if(hpos===hist.length)draft=input.value;hpos=Math.max(0,hpos-1);input.value=hist[hpos];}
+    else if(e.key==='ArrowDown'){if(hpos>=hist.length)return;e.preventDefault();hpos++;input.value=hpos===hist.length?draft:hist[hpos];}
+    else if(e.key==='Tab'){e.preventDefault();var v=input.value.toLowerCase();if(!v)return;
+      var hit=COMMANDS.filter(function(c){return c.indexOf(v)===0;});
+      if(hit.length){input.value=hit[0];if(/^\/pg (find|explain|cite)$/.test(hit[0]))input.value+=' ';}}
+    else if(e.key==='l'&&e.ctrlKey){e.preventDefault();exec('clear');}
+  });
+  // clicking anywhere on the terminal focuses the prompt (never auto-focus on load: it would pop the mobile keyboard)
+  document.querySelector('.term').addEventListener('click',function(e){
+    if(e.target.closest('button,a,.sbox,.drow,.ln'))return;
+    if(window.getSelection&&String(window.getSelection()))return;
+    input.focus({preventScroll:true});});
   tabs.forEach(function(t){t.addEventListener('click',function(){select(t.getAttribute('data-demo'));});});
   chips.forEach(function(c){c.addEventListener('click',function(){
     var k=c.getAttribute('data-demo');select(k);
